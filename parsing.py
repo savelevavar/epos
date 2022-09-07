@@ -21,9 +21,9 @@ def lookup(driver):
             (By.CLASS_NAME, "login__item")))
         button.click()
         box_login = driver.wait.until(EC.presence_of_element_located(
-            (By.CLASS_NAME, "base-input login__input login__input--login")))
+            (By.NAME, "login")))
         box_password = driver.wait.until(EC.presence_of_element_located(
-            (By.CLASS_NAME, "base-input login__input login__input--password")))
+            (By.CLASS_NAME, "base-input__input")))
 
         box_login.send_keys(login)
         box_password.send_keys(password)
