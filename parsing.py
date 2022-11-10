@@ -7,7 +7,7 @@ from selenium.common.exceptions import TimeoutException
 
 
 def init_driver():
-    driver = webdriver.Chrome('C:/Users/ACER/Downloads/chromedriver_win32/chromedriver.exe')
+    driver = webdriver.Chrome('C:\\Users\\ACER\\Documents\\driver\\chromedriver.exe')
     driver.wait = WebDriverWait(driver, 5)
     return driver
 
@@ -20,12 +20,10 @@ def lookup(driver):
         button = driver.wait.until(EC.element_to_be_clickable(
             (By.CLASS_NAME, "login__item")))
         button.click()
-        box_login = driver.wait.until(EC.presence_of_element_located(
-            (By.NAME, "login")))
+        driver.find_element_by_name("login").send_keys(login)
         box_password = driver.wait.until(EC.presence_of_element_located(
             (By.CLASS_NAME, "base-input__input")))
 
-        box_login.send_keys(login)
         box_password.send_keys(password)
     except TimeoutException:
         print("Box or Button not found in epos")
