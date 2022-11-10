@@ -20,7 +20,7 @@ def lookup(driver):
         button = driver.wait.until(EC.element_to_be_clickable(
             (By.CLASS_NAME, "login__item")))
         button.click()
-        driver.find_element_by_name("login").send_keys(login)
+        driver.find_element(By.XPATH, "//input[role=textbox][class='base-input__input']").send_keys(login)
         box_password = driver.wait.until(EC.presence_of_element_located(
             (By.CLASS_NAME, "base-input__input")))
 

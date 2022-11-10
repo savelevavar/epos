@@ -21,7 +21,7 @@ async def send_random_value(call: types.CallbackQuery, message: types.Message):
     await call.message.answer('Тип пользователя, ученик, установлен')
     keyboard = types.InlineKeyboardMarkup()
     keyboard.add(types.InlineKeyboardButton(text="Вход с паролем", callback_data="login_with_password"))
-    await bot.send_message('''Выберите способ авторизации''', reply_markup=keyboard,)
+    await bot.send_message('''Выберите способ авторизации''', reply_markup=keyboard)
 
 
 # @dp.callback_query_handler(text="login_with_password")
