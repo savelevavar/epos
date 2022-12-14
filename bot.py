@@ -3,6 +3,7 @@ import logging
 from aiogram import Bot, Dispatcher, executor, types
 from os import getenv
 from sys import exit
+from aiogram.dispatcher.filters.state import State, StatesGroup
 
 
 bot_token = getenv("BOT_TOKEN")
@@ -15,11 +16,16 @@ dp = Dispatcher(bot)
 # Включаем логирование, чтобы не пропустить важные сообщения
 logging.basicConfig(level=logging.INFO)
 
+class GetUserInfo(StatesGroup):
+    waiting_for_user_login = State()
+    waiting_for_user_password = State()
 
-# Хэндлер на команду /test1
-@dp.message_handler(commands="test1")
-async def cmd_test1(message: types.Message):
-    await message.reply("Test 1")
+
+@dp.message_handler(commands=['start'])
+async def get_user_mailbox(message: types.Message):
+    chat_id = message.chat.id
+    await message.answer('Enter your login: ')
+    await GetUserInfo.waiting_for_user_login.set()
 
 
 @dp.errors_handler(exception=BotBlocked)
@@ -38,6 +44,10 @@ async def cmd_answer(message: types.Message):
 
 
 @dp.message_handler(commands="reply")
+async def cmd_reply(message: types.Message):
+    await message.reply('Это ответ с "ответом"')
+
+@dp.message_handler(commands="login")
 async def cmd_reply(message: types.Message):
     await message.reply('Это ответ с "ответом"')
 
