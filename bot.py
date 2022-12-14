@@ -1,40 +1,47 @@
+from aiogram.utils.exceptions import BotBlocked
 import logging
 from aiogram import Bot, Dispatcher, executor, types
+from os import getenv
+from sys import exit
 
 
-bot = Bot(token="5154655086:AAEJatzVb9H163lz6pabcN7k3N7P6TdnuOU")
+bot_token = getenv("BOT_TOKEN")
+if not bot_token:
+    exit("Error: no token provided")
+
+bot = Bot(token=bot_token)
+# Диспетчер для бота
 dp = Dispatcher(bot)
+# Включаем логирование, чтобы не пропустить важные сообщения
 logging.basicConfig(level=logging.INFO)
 
 
-# Хэндлер на команду /start
-@dp.message_handler(commands="start")
-async def cmd_start(message: types.Message):
-    keyboard = types.InlineKeyboardMarkup()
-    keyboard.add(types.InlineKeyboardButton(text="Ученик", callback_data="type_of_student"))
-    await message.answer('''Добро пожаловать в бота \"Эпос\".
-Авторизуйтесь для дальнейшей работы, для этого выберите тип пользователя''', reply_markup=keyboard)
+# Хэндлер на команду /test1
+@dp.message_handler(commands="test1")
+async def cmd_test1(message: types.Message):
+    await message.reply("Test 1")
 
 
-@dp.callback_query_handler(text="type_of_student")
-async def send_random_value(call: types.CallbackQuery, message: types.Message):
-    await call.message.answer('Тип пользователя, ученик, установлен')
-    keyboard = types.InlineKeyboardMarkup()
-    keyboard.add(types.InlineKeyboardButton(text="Вход с паролем", callback_data="login_with_password"))
-    await bot.send_message('''Выберите способ авторизации''', reply_markup=keyboard)
+@dp.errors_handler(exception=BotBlocked)
+async def error_bot_blocked(update: types.Update, exception: BotBlocked):
+    # Update: объект события от Telegram. Exception: объект исключения
+    # Здесь можно как-то обработать блокировку, например, удалить пользователя из БД
+    print(f"Меня заблокировал пользователь!\nСообщение: {update}\nОшибка: {exception}")
+
+    # Такой хэндлер должен всегда возвращать True,
+    # если дальнейшая обработка не требуется.
+    return True
+
+@dp.message_handler(commands="answer")
+async def cmd_answer(message: types.Message):
+    await message.answer("Это простой ответ")
 
 
-# @dp.callback_query_handler(text="login_with_password")
-# async def send_random_value(call: types.CallbackQuery):
-#     await call.message.answer('Выбран вход с паролем')
-#     await message.answer('''Ответом на это сообщение введите логин пользователя''')
-
-@dp.message_handler(commands="random")
-async def cmd_random(message: types.Message):
-    keyboard = types.InlineKeyboardMarkup()
-    keyboard.add(types.InlineKeyboardButton(text="Нажми меня", callback_data="random_value"))
-    await message.answer("Нажмите на кнопку, чтобы бот отправил число от 1 до 10", reply_markup=keyboard)
+@dp.message_handler(commands="reply")
+async def cmd_reply(message: types.Message):
+    await message.reply('Это ответ с "ответом"')
 
 
 if __name__ == "__main__":
+    # Запуск бота
     executor.start_polling(dp, skip_updates=True)
