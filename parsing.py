@@ -1,36 +1,214 @@
-import time
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
+import requests
 
 
-def init_driver():
-    driver = webdriver.Chrome('C:\\Users\\ACER\\Documents\\driver\\chromedriver.exe')
-    driver.wait = WebDriverWait(driver, 5)
-    return driver
+class EposClient:
+    __cabinetUrl__ = 'https://cabinet.permkrai.ru/'
+    __eposUrl__ = 'https://school.permkrai.ru/'
+
+    def __init__(self):
+        self.__session__ = requests.Session()
+
+    def __setheaders__(self):
+        # pycharm's weird o_O?
+        self.__session__.headers['user-agent'] = 'Chrome/98.0.4758.10'
+        # imitate a Chrome browser as much as possible
+        self.__session__.headers['sec-ch-ua'] = '" Not A;Brand";v="99", "Chromium";v="98", "Google Chrome";v="98"'
+        self.__session__.headers['sec-ch-ua-mobile'] = '?0'
+        self.__session__.headers['sec-ch-ua-platform'] = '"Windows"'
+        self.__session__.headers['pragma'] = 'no-cache'
+        self.__session__.headers['accept-language'] = 'en-US,en;q=0.9'
+        self.__session__.headers['cache-control'] = 'no-cache'
+        self.__session__.headers['accept'] = 'application/json, text/plain, text/html, */*'
+        self.__session__.headers['upgrade-insecure-requests'] = '1'
+        self.__session__.headers['x-requested-with'] = 'XMLHttpRequest'
+
+    def __refreshcsrf__(self):
+        self.__setheaders__()
+
+        r = self.__session__.get(
+            url=self.__cabinetUrl__ + 'login'
+        )
+
+        html = r.text
+        # grab the csrf token from the html layout (very awful but works)
+        startpos = html.find('"csrf-token" content="') + len('"csrf-token" content="')
+        endpos = html.find('" id="csrf"')
+        csrftoken = html[startpos:endpos]
+
+        self.__session__.headers['x-csrf-token'] = csrftoken
+        self.__session__.headers['x-xsrf-token'] = self.__session__.cookies['XSRF-TOKEN']
+
+    def login_password(self, rsaag_login: str, rsaag_password: str):
+        self.__refreshcsrf__()
+
+        r = self.__session__.post(
+            url=self.__cabinetUrl__ + 'login',
+            data={
+                '_token': self.__session__.headers['x-csrf-token'],
+                'login': rsaag_login,
+                'password': rsaag_password
+            }
+        )
+
+        return r.status_code < 400
+
+    # def login_gosuslugi O_O
+
+    def logout(self):
+        self.__refreshcsrf__()
+
+        r = self.__session__.get(
+            url=self.__cabinetUrl__ + 'logout'
+        )
+
+        return r.status_code < 400
+
+    def check_agreement(self):
+        self.__refreshcsrf__()
+
+        r = self.__session__.post(
+            url=self.__cabinetUrl__ + 'check_agreement'
+        )
+
+        return r.json()
+
+    def auth_epos(self, auth_app: str):
+        self.__refreshcsrf__()
+
+        r = self.__session__.get(
+            url=self.__eposUrl__ + 'authenticate?mode=oauth&app=' + auth_app
+        )
+
+        # ..... ?????????? ???????????
+        self.__session__.headers['auth-token'] = self.__session__.cookies['auth_token']
+        self.__session__.headers['profile-id'] = self.__session__.cookies['profile_id']
+
+        # the IB Whiteboard client seems to save this auth-token value into some storage, might be useful?
+        return [r.status_code < 400, self.__session__.headers['auth-token']]
+
+    def auth_epos_student(self):
+        return self.auth_epos('rsaags')
+
+    def auth_epos_parent(self):
+        return self.auth_epos('rsaag')
+
+    def auth_epos_teacher(self):
+        return self.auth_epos('rsaa')
+
+    def epos_logout(self):
+        r = self.__session__.delete(
+            url=self.__eposUrl__
+                + 'lms/api/sessions?authentication_token=' + str(self.__session__.headers['auth-token']),
+            json=[]
+        )
+
+        return r.status_code < 400
+
+    def epos_get_sessions(self):
+        r = self.__session__.post(
+            url=self.__eposUrl__
+                + 'lms/api/sessions?pid=' + self.__session__.headers['profile-id'],
+            json={
+                'auth_token': self.__session__.headers['auth-token']
+            }
+        )
+
+        return r.json()
+
+    def epos_get_academic_years(self, profile_id: int):
+        r = self.__session__.get(
+            url=self.__eposUrl__ + 'core/api/academic_years?pid=' + str(profile_id)
+        )
+
+        return r.json()
+
+    def epos_get_system_messages(self, profile_id: int, published: bool, today: bool):
+        r = self.__session__.get(
+            url=self.__eposUrl__
+                + 'acl/api/system_messages?pid=' + str(profile_id)
+                + '&published=' + str(published).lower()
+                + '&today=' + str(today).lower()
+        )
+
+        return r.json()
+
+    def epos_get_users(self, user_ids: list[int], profile_id: int):
+        r = self.__session__.get(
+            url=self.__eposUrl__
+                + 'acl/api/users?ids=' + ','.join([str(el) for el in user_ids])
+                + '&pid=' + str(profile_id)
+        )
+
+        return r.json()
+
+    def epos_get_student_profiles(self, profile_id: int, academic_year_id: int = -1):
+        r = self.__session__.get(
+            url=self.__eposUrl__
+                + 'core/api/student_profiles/' + str(profile_id) + '?pid=' + str(profile_id)
+                + '&academic_year_id=' + str(academic_year_id) if academic_year_id >= 0 else ''
+        )
+
+        return r.json()
+
+    def epos_get_progress(self, profile_id: int, academic_year_id: int, hide_half_years: bool):
+        r = self.__session__.get(
+            url=self.__eposUrl__
+                + 'reports/api/progress/json?academic_year_id=' + str(academic_year_id)
+                + '&hide_half_years=' + str(hide_half_years).lower()
+                + '&pid=' + str(profile_id)
+                + '&student_profile_id=' + str(profile_id)
+        )
+
+        return r.json()
+
+    def epos_get_notifications(self, profile_id: int):
+        r = self.__session__.get(
+            url=self.__eposUrl__
+                + 'notification/api/notifications/status?pid=' + str(profile_id)
+                + '&student_id=' + str(profile_id)
+        )
+
+        return r.json()
 
 
-def lookup(driver):
-    driver.get("https://cabinet.permkrai.ru/login")
-    login = 'varya.saveleva.05@mail.ru'
-    password = 'qweasdzxc2289'
-    try:
-        button = driver.wait.until(EC.element_to_be_clickable(
-            (By.CLASS_NAME, "login__item")))
-        button.click()
-        driver.find_element(By.XPATH, "//input[role=textbox][class='base-input__input']").send_keys(login)
-        box_password = driver.wait.until(EC.presence_of_element_located(
-            (By.CLASS_NAME, "base-input__input")))
+def testcase_main():
+    print('pre-testcase...')
+    e = EposClient()
+    e2 = EposClient()
 
-        box_password.send_keys(password)
-    except TimeoutException:
-        print("Box or Button not found in epos")
+    # achtung paroli!!!
+    login = input("Login (E-Mail): ")
+    password = input("Password: ")
+
+    loginok = e.login_password(login, password)
+    agreement = e.check_agreement()
+    eposok = e.auth_epos_student()
+    epossessions = e.epos_get_sessions()
+    myuserid = epossessions['id']
+    myprofid = epossessions['profiles'][0]['id']
+    eposacadem = e.epos_get_academic_years(myprofid)
+    eposmessages = e.epos_get_system_messages(myprofid, True, True)
+    eposprogress = e.epos_get_progress(myprofid, eposacadem[-1]['id'], True)
+    eposnotifs = e.epos_get_notifications(myprofid)
+    # ?????????????????
+    eposusers = e.epos_get_users([myuserid, myuserid], myprofid)
+    # print results
+    print('loginOk=', loginok)
+    print('agreement=', agreement)
+    print('eposOk=', eposok)
+    print('eposSessions=', epossessions)
+    print('eposAcademYears=', eposacadem)
+    print('eposMessages=', eposmessages)
+    print('eposUserData=', eposusers)
+    print('eposNotifs=', eposnotifs)
+    print('eposProgress=', eposprogress)
+    eposlogout = e.epos_logout()
+    rsaaglogout = e.logout()
+    print('eposLogout=', eposlogout)
+    print('rsaagLogout=', rsaaglogout)
+    print('testcase PASS :D')
 
 
-if __name__ == "__main__":
-    driver = init_driver()
-    lookup(driver)
-    time.sleep(5)
-    # driver.quit()
+# the fun starts here
+if __name__ == '__main__':
+    testcase_main()
