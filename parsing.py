@@ -177,8 +177,10 @@ def testcase_main():
     e2 = EposClient()
 
     # achtung paroli!!!
-    login = input("Login (E-Mail): ")
-    password = input("Password: ")
+    # login = input("Login (E-Mail): ")
+    # password = input("Password: ")
+    login = 'varya.saveleva.05@mail.ru'
+    password = 'qweasdzxc2289'
 
     loginok = e.login_password(login, password)
     agreement = e.check_agreement()
@@ -193,19 +195,13 @@ def testcase_main():
     # ?????????????????
     eposusers = e.epos_get_users([myuserid, myuserid], myprofid)
     # print results
-    print('loginOk=', loginok)
-    print('agreement=', agreement)
-    print('eposOk=', eposok)
-    print('eposSessions=', epossessions)
-    print('eposAcademYears=', eposacadem)
-    print('eposMessages=', eposmessages)
-    print('eposUserData=', eposusers)
-    print('eposNotifs=', eposnotifs)
-    print('eposProgress=', eposprogress)
+    # print(*eposprogress)
+    for subject in eposprogress:
+        for name in subject.keys():
+            print(name, subject[name])
+        print()
     eposlogout = e.epos_logout()
     rsaaglogout = e.logout()
-    print('eposLogout=', eposlogout)
-    print('rsaagLogout=', rsaaglogout)
     print('testcase PASS :D')
 
 
