@@ -203,6 +203,7 @@ def testcase_main():
         if len(c) != 0:
             c = c[0]['marks']
         print(c)
+
         print(subject['subject_name'])
         print('Средняя оценка в пятибалльной шкале:', subject['avg_five'])
         print('Средняя оценка в десятибалльной шкале:', subject['avg_original'])

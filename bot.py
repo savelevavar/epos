@@ -42,17 +42,20 @@ async def error_bot_blocked(update: types.Update, exception: BotBlocked):
     # если дальнейшая обработка не требуется.
     return True
 
+
 @dp.message_handler(commands = ['login'])
 async def example_command(message: types.Message):
     global login
     login = message.text.split(maxsplit=1)[1]
     await message.answer(f'Логин {login} получен!')
 
+
 @dp.message_handler(commands = ['password'])
 async def example_command(message: types.Message):
     global password
     password = message.text.split(maxsplit=1)[1]
     await message.answer(f'Пароль {password} получен!')
+
 
 if __name__ == "__main__":
     # Запуск бота
