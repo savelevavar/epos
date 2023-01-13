@@ -1,5 +1,5 @@
 import requests
-
+import json
 
 class EposClient:
     __cabinetUrl__ = 'https://cabinet.permkrai.ru/'
@@ -195,11 +195,19 @@ def testcase_main():
     # ?????????????????
     eposusers = e.epos_get_users([myuserid, myuserid], myprofid)
     # print results
-    # print(*eposprogress)
+
     for subject in eposprogress:
-        for name in subject.keys():
-            print(name, subject[name])
+        jsonStr = json.dumps(subject)
+        hep = json.loads(jsonStr)
+        c = hep['periods']
+        if len(c) != 0:
+            c = c[0]['marks']
+        print(c)
+        print(subject['subject_name'])
+        print('Средняя оценка в пятибалльной шкале:', subject['avg_five'])
+        print('Средняя оценка в десятибалльной шкале:', subject['avg_original'])
         print()
+
     eposlogout = e.epos_logout()
     rsaaglogout = e.logout()
     print('testcase PASS :D')
