@@ -5,6 +5,7 @@ from os import getenv
 from sys import exit
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.utils.markdown import code
+from parsing import testcase_main
 
 
 login = None
@@ -55,6 +56,13 @@ async def example_command(message: types.Message):
     global password
     password = message.text.split(maxsplit=1)[1]
     await message.answer(f'Пароль {password} получен!')
+
+
+@dp.message_handler(commands = ['table'])
+async def example_command(message: types.Message):
+    global login, password
+    await message.answer('Подождите, это может занять некоторое время')
+    await message.answer(''.join(testcase_main(login, password)))
 
 
 if __name__ == "__main__":

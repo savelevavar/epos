@@ -171,16 +171,13 @@ class EposClient:
         return r.json()
 
 
-def testcase_main():
+def testcase_main(login, password):
+    global eposprogress
     print('pre-testcase...')
     e = EposClient()
-    e2 = EposClient()
 
-    # achtung paroli!!!
-    # login = input("Login (E-Mail): ")
-    # password = input("Password: ")
-    login = 'varya.saveleva.05@mail.ru'
-    password = 'qweasdzxc2289'
+    # login = 'varya.saveleva.05@mail.ru'
+    # password = 'qweasdzxc2289'
 
     loginok = e.login_password(login, password)
     agreement = e.check_agreement()
@@ -196,24 +193,20 @@ def testcase_main():
     eposusers = e.epos_get_users([myuserid, myuserid], myprofid)
     # print results
 
+    data = []
     for subject in eposprogress:
         jsonStr = json.dumps(subject)
         hep = json.loads(jsonStr)
         c = hep['periods']
         if len(c) != 0:
             c = c[0]['marks']
-        print(c)
-
-        print(subject['subject_name'])
-        print('Средняя оценка в пятибалльной шкале:', subject['avg_five'])
-        print('Средняя оценка в десятибалльной шкале:', subject['avg_original'])
-        print()
-
-    eposlogout = e.epos_logout()
-    rsaaglogout = e.logout()
-    print('testcase PASS :D')
-
-
-# the fun starts here
-if __name__ == '__main__':
-    testcase_main()
+        data.append(subject['subject_name'] + '\n')
+        for grade in c:
+            grades = grade['values'][0]['original']
+            weight = grade['weight']
+            data.append(f'{grades}({weight}) ')
+        data.append('\n')
+        data.append('Средняя оценка в пятибалльной шкале: ' + subject['avg_five'] + '\n')
+        data.append('Средняя оценка в десятибалльной шкале: ' + subject['avg_original'] + '\n')
+        data.append('\n')
+    return data
