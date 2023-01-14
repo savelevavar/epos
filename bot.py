@@ -8,9 +8,6 @@ from aiogram.utils.markdown import code
 from parsing import testcase_main
 
 
-login = None
-password = None
-
 bot_token = getenv("BOT_TOKEN")
 if not bot_token:
     exit("Error: no token provided")
@@ -61,7 +58,7 @@ async def example_command(message: types.Message):
 @dp.message_handler(commands = ['table'])
 async def example_command(message: types.Message):
     global login, password
-    await message.answer('Подождите, это может занять некоторое время')
+    await message.answer('Подождите, это может занять некоторое время (около 1-2 минут)')
     await message.answer(''.join(testcase_main(login, password)))
 
 

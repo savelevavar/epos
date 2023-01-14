@@ -172,7 +172,6 @@ class EposClient:
 
 
 def testcase_main(login, password):
-    global eposprogress
     print('pre-testcase...')
     e = EposClient()
 
@@ -205,6 +204,8 @@ def testcase_main(login, password):
             grades = grade['values'][0]['original']
             weight = grade['weight']
             data.append(f'{grades}({weight}) ')
+        if len(c) == 0:
+            data.append('Оценок за данный предмет нет')
         data.append('\n')
         data.append('Средняя оценка в пятибалльной шкале: ' + subject['avg_five'] + '\n')
         data.append('Средняя оценка в десятибалльной шкале: ' + subject['avg_original'] + '\n')
